@@ -17,6 +17,15 @@ func Command() *cli.Command {
 				Aliases:  []string{"v"},
 				Required: true,
 			},
+			&cli.BoolFlag{
+				Name:  "push",
+				Usage: "Push the built image to the registry",
+			},
+			&cli.StringSliceFlag{
+				Name:    "tag",
+				Usage:   "Additional tags for the Docker image",
+				Aliases: []string{"t"},
+			},
 		},
 		Action: buildAction,
 	}
@@ -26,5 +35,7 @@ func buildAction(ctx *cli.Context) error {
 	return builder.Build(ctx.Context, &builder.Options{
 		PhpVersion:      ctx.String("php-version"),
 		ComposerVersion: ctx.Int("composer-version"),
+		Push:            ctx.Bool("push"),
+		Tags:            ctx.StringSlice("tag"),
 	})
 }

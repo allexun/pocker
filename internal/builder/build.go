@@ -2,11 +2,11 @@ package builder
 
 import (
 	"archive/tar"
-	"bufio"
 	"bytes"
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"text/template"
 
 	"github.com/docker/docker/api/types"
@@ -15,7 +15,7 @@ import (
 	"gitlab.com/kritskov/pocker/internal/docker"
 )
 
-func Build(ctx context.Context, opts *Options) error {
+func Build(ctx context.Context, options *Options) error {
 	tmpl, err := template.New(common.Dockerfile).Parse(docker.FileTemplate)
 	if err != nil {
 		return err
@@ -23,14 +23,14 @@ func Build(ctx context.Context, opts *Options) error {
 
 	dockerfile := &bytes.Buffer{}
 	err = tmpl.Execute(dockerfile, &docker.TemplateOptions{
-		PhpVersion:      opts.PhpVersion,
-		ComposerVersion: opts.ComposerVersion,
+		PhpVersion:      options.PhpVersion,
+		ComposerVersion: options.ComposerVersion,
 	})
 	if err != nil {
 		return err
 	}
 
-	docker, err := client.NewClientWithOpts(client.FromEnv)
+	dockerClient, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return err
 	}
@@ -40,17 +40,29 @@ func Build(ctx context.Context, opts *Options) error {
 		return err
 	}
 
-	res, err := docker.ImageBuild(ctx, dockerContext, types.ImageBuildOptions{
-		Tags: []string{fmt.Sprintf("%s:%s-%d", common.ImageBaseName, opts.PhpVersion, opts.ComposerVersion)},
+	img := fmt.Sprintf("%s:%s-%d", common.ImageBaseName, options.PhpVersion, options.ComposerVersion)
+	tags := []string{img}
+	for _, t := range options.Tags {
+		tags = append(tags, fmt.Sprintf("%s:%s", common.ImageBaseName, t))
+	}
+
+	buildResponse, err := dockerClient.ImageBuild(ctx, dockerContext, types.ImageBuildOptions{
+		Tags: tags,
 	})
 	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
-	reader := bufio.NewReader(res.Body)
-	scanner := bufio.NewScanner(reader)
-	for scanner.Scan() {
-		fmt.Println(scanner.Text())
+	defer buildResponse.Body.Close()
+	if _, err = io.Copy(os.Stdout, buildResponse.Body); err != nil {
+		return err
+	}
+
+	if options.Push {
+		for _, t := range tags {
+			if err = docker.ExecPush(ctx, t); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
