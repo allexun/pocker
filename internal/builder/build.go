@@ -47,7 +47,8 @@ func Build(ctx context.Context, options *Options) error {
 	}
 
 	buildResponse, err := dockerClient.ImageBuild(ctx, dockerContext, types.ImageBuildOptions{
-		Tags: tags,
+		Tags:    tags,
+		Version: types.BuilderBuildKit,
 	})
 	if err != nil {
 		return err
