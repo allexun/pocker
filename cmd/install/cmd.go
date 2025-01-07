@@ -15,8 +15,20 @@ func Command() *cli.Command {
 			&cli.StringFlag{
 				Name:    "path",
 				Usage:   "Path to the project",
-				Value:   "",
 				Aliases: []string{"p"},
+			},
+			&cli.BoolFlag{
+				Name:    "ssh",
+				Usage:   "Copy user's SSH key to the container",
+				Aliases: []string{"s"},
+			},
+			&cli.BoolFlag{
+				Name:  "no-auto-remove",
+				Usage: "Do not remove container after execution",
+			},
+			&cli.StringFlag{
+				Name:  "cmd",
+				Usage: "Specify custom command to run in the container",
 			},
 		},
 		Action: installAction,
@@ -33,5 +45,11 @@ func installAction(ctx *cli.Context) error {
 		projectPath = wd
 	}
 
-	return installer.Install(ctx.Context, projectPath, ctx.Int("composer-version"))
+	return installer.Install(ctx.Context, &installer.Options{
+		ProjectPath:     projectPath,
+		ComposerVersion: ctx.Int("composer-version"),
+		UseSsh:          ctx.Bool("ssh"),
+		NoAutoRemove:    ctx.Bool("no-auto-remove"),
+		Cmd:             ctx.String("cmd"),
+	})
 }
