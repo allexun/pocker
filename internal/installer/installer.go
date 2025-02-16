@@ -20,8 +20,10 @@ func Install(ctx context.Context, options *Options) error {
 		return err
 	}
 
-	version, err := composerFile.GetPhpVersion()
-	if err != nil {
+	var version string
+	if options.PhpVersion != "" {
+		version = options.PhpVersion
+	} else if version, err = composerFile.GetPhpVersion(); err != nil {
 		return err
 	}
 	fmt.Printf("Using PHP version '%s' with composer %d\n", version, options.ComposerVersion)

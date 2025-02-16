@@ -1,6 +1,7 @@
 package build
 
 import (
+	"fmt"
 	"github.com/urfave/cli/v2"
 	"gitlab.com/kritskov/pocker/internal/builder"
 )
@@ -10,13 +11,6 @@ func Command() *cli.Command {
 		Name:  "build",
 		Usage: "Build docker image",
 		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:     "php-version",
-				Usage:    "PHP version for the image",
-				Value:    "",
-				Aliases:  []string{"v"},
-				Required: true,
-			},
 			&cli.BoolFlag{
 				Name:  "push",
 				Usage: "Push the built image to the registry",
@@ -32,8 +26,13 @@ func Command() *cli.Command {
 }
 
 func buildAction(ctx *cli.Context) error {
+	phpVersion := ctx.String("php-version")
+	if phpVersion == "" {
+		return fmt.Errorf("php-version is required")
+	}
+
 	return builder.Build(ctx.Context, &builder.Options{
-		PhpVersion:      ctx.String("php-version"),
+		PhpVersion:      phpVersion,
 		ComposerVersion: ctx.Int("composer-version"),
 		Push:            ctx.Bool("push"),
 		Tags:            ctx.StringSlice("tag"),

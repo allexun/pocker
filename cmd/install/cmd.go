@@ -13,9 +13,8 @@ func Command() *cli.Command {
 		Usage: "Install composer requirements",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:    "path",
-				Usage:   "Path to the project",
-				Aliases: []string{"p"},
+				Name:  "path",
+				Usage: "Path to the project",
 			},
 			&cli.BoolFlag{
 				Name:    "ssh",
@@ -47,6 +46,7 @@ func installAction(ctx *cli.Context) error {
 
 	return installer.Install(ctx.Context, &installer.Options{
 		ProjectPath:     projectPath,
+		PhpVersion:      ctx.String("php-version"),
 		ComposerVersion: ctx.Int("composer-version"),
 		UseSsh:          ctx.Bool("ssh"),
 		NoAutoRemove:    ctx.Bool("no-auto-remove"),
