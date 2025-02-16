@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"github.com/Masterminds/semver/v3"
 	"gitlab.com/kritskov/pocker/internal/docker"
 	"os"
 	"regexp"
@@ -26,6 +27,11 @@ func Install(ctx context.Context, options *Options) error {
 	} else if version, err = composerFile.GetPhpVersion(); err != nil {
 		return err
 	}
+	sv, err := semver.NewVersion(version)
+	if err != nil {
+		return err
+	}
+	version = fmt.Sprintf("%d.%d", sv.Major(), sv.Minor())
 	fmt.Printf("Using PHP version '%s' with composer %d\n", version, options.ComposerVersion)
 
 	image := fmt.Sprintf("%s:%s-%d", common.ImageBaseName, version, options.ComposerVersion)

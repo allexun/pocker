@@ -10,7 +10,7 @@ const FileName = "composer.json"
 
 func ParseVersionConstraint(version string) string {
 	if strings.HasPrefix(version, "^") || strings.HasPrefix(version, "~") {
-		return version[1:]
+		version = version[1:]
 	}
 
 	return version

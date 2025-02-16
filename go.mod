@@ -3,6 +3,7 @@ module gitlab.com/kritskov/pocker
 go 1.23.0
 
 require (
+	github.com/Masterminds/semver/v3 v3.3.1
 	github.com/docker/docker v27.4.1+incompatible
 	github.com/urfave/cli/v2 v2.27.5
 )
