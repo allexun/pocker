@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"gitlab.com/kritskov/pocker/internal/docker"
 	"os"
 	"regexp"
 
@@ -26,7 +27,11 @@ func Install(ctx context.Context, options *Options) error {
 	fmt.Printf("Using PHP version '%s' with composer %d\n", version, options.ComposerVersion)
 
 	image := fmt.Sprintf("%s:%s-%d", common.ImageBaseName, version, options.ComposerVersion)
-	docker, err := client.NewClientWithOpts(client.FromEnv)
+	if err = docker.ExecPull(ctx, image); err != nil {
+		return err
+	}
+
+	dockerClient, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return err
 	}
@@ -42,7 +47,7 @@ func Install(ctx context.Context, options *Options) error {
 		return err
 	}
 
-	c, err := docker.ContainerCreate(ctx, &container.Config{
+	c, err := dockerClient.ContainerCreate(ctx, &container.Config{
 		Image:      image,
 		Cmd:        cmd,
 		WorkingDir: "/app",
@@ -58,10 +63,10 @@ func Install(ctx context.Context, options *Options) error {
 	}
 	fmt.Println(c.ID)
 
-	if err = docker.ContainerStart(ctx, c.ID, container.StartOptions{}); err != nil {
+	if err = dockerClient.ContainerStart(ctx, c.ID, container.StartOptions{}); err != nil {
 		return err
 	}
-	hijack, err := docker.ContainerAttach(ctx, c.ID, container.AttachOptions{
+	hijack, err := dockerClient.ContainerAttach(ctx, c.ID, container.AttachOptions{
 		Stream: true,
 		Stdout: true,
 		Stderr: true,

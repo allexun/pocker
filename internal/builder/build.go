@@ -46,6 +46,17 @@ func Build(ctx context.Context, options *Options) error {
 		tags = append(tags, fmt.Sprintf("%s:%s", common.ImageBaseName, t))
 	}
 
+	phpImage := fmt.Sprintf("php:%s-cli", options.PhpVersion)
+	composerImage := fmt.Sprintf("composer:%d", options.ComposerVersion)
+	fmt.Printf("Using base images: %s, %s\n", phpImage, composerImage)
+
+	if err = docker.ExecPull(ctx, phpImage); err != nil {
+		return err
+	}
+	if err = docker.ExecPull(ctx, composerImage); err != nil {
+		return err
+	}
+
 	buildResponse, err := dockerClient.ImageBuild(ctx, dockerContext, types.ImageBuildOptions{
 		Tags:    tags,
 		Version: types.BuilderBuildKit,
